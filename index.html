@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <script type="text/javascript" src="d3.min.js"></script>
+    <style>
+      .axis path,
+      .axis line {
+        fill:none;
+        stroke: black;
+        shape-rendering: crispEdges;
+      }
+      .axis text {
+        font-family: sans-serif;
+        font-size: 11px;
+      }
+      #tooltip {
+        position: absolute;
+        width: 200px;
+        height: auto;
+        padding: 10px;
+        background-color: white;
+        -webkit-border-radius: 10px;
+        -moz-border-radius: 10px;
+        border-radius: 10px;
+        -webkit-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        -moz-box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.4);
+        pointer-events: none;
+      }
+      #tooltip.hidden {
+        display: none;
+      }
+      #tooltip p {
+        margin: 0;
+        font-family: sans-serif;
+        font-size: 16px;
+        line-height: 20px;
+      }
+    </style>
+  </head>
+  <body>
+
+
+  <p id="promoteCount"></p>
+
+
+
+  <script>
+
+    var dataset;
+
+    var margin = {top: 10, right: 10, bottom: 80, left: 70},
+    width = 1400 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+    function timeConverterToDate(UNIX_timestamp){
+        var a = new Date(UNIX_timestamp);
+        //var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var months = ['01','02','03','04','05','06','07','08','09','10','11','12'];
+        var year = a.getFullYear();
+        var month = months[a.getMonth()];
+        var date = a.getDate();
+        var hour = a.getHours();
+        var min = a.getMinutes();
+        var sec = a.getSeconds();
+        //var time = date+','+month+' '+year+' '+hour+':'+min+':'+sec ;
+        var time = month+'.'+(date<10?'0':'')+date;
+        return time;
+    };
+
+    var predata = {};
+
+    var data = [];
+
+    var promoteCount = 0;
+
+
+    d3.json("stat.json", function(d) {
+
+      for(var key in d){
+         var currentDate = timeConverterToDate(d[key].timestamp);
+         if(d[key].timestamp >= 1415268000000)
+            promoteCount++;
+
+         if(!predata[currentDate])
+            predata[currentDate] = 0;
+
+         predata[currentDate]++;
+      }
+      for(var key in predata){
+
+        data.push({"date":key,"count":predata[key]});
+
+      }
+      console.log(data);
+
+      draw();
+
+    });
+
+    function draw(){
+
+      console.log("drawing...");
+
+
+      d3.select("#promoteCount").text(promoteCount);
+
+      var x = d3.scale.ordinal().rangeRoundBands([0, width], .15);
+      var y = d3.scale.linear().range([height, 0]);
+
+      var xAxis = d3.svg.axis()
+          .scale(x)
+          .orient("bottom");
+          //.tickFormat(d3.time.format("%m-%d"));
+
+      var yAxis = d3.svg.axis()
+          .scale(y)
+          .orient("left")
+          .ticks(10);
+
+      var svg = d3.select("body").append("svg")
+          .attr("width", width + margin.left + margin.right)
+          .attr("height", height + margin.top + margin.bottom)
+          .append("g")
+          .attr("transform",
+                "translate(" + margin.left + "," + margin.top + ")");
+
+      x.domain(data.map(function(d) { return d.date; }));
+      y.domain([0, d3.max(data, function(d) { return d.count; })]);
+
+
+
+      svg.append("g")
+         .attr("class", "x axis")
+         .attr("transform", "translate(0," + height + ")")
+         .call(xAxis)
+       .selectAll("text")
+         .style("text-anchor", "end")
+         .attr("dx", "-.8em")
+         .attr("dy", "-.55em")
+         .attr("transform", "rotate(-90)" );
+
+      svg.append("g")
+         .attr("class", "y axis")
+         .call(yAxis)
+       .append("text")
+         .attr("transform", "rotate(-90)")
+         .attr("y", 6)
+         .attr("dy", ".71em")
+         .style("text-anchor", "end")
+         .text("Count");
+
+      svg.selectAll("bar")
+         .data(data)
+         .enter().append("rect")
+         .style("fill", "steelblue")
+         .attr("x", function(d) { return x(d.date); })
+         .attr("width", x.rangeBand())
+         .attr("y", function(d) { return y(d.count); })
+         .attr("height", function(d) { return height - y(d.count); });
+
+      };
+
+</script>
+
+  </body>
+</html>
