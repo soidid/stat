@@ -92,7 +92,7 @@
         data.push({"date":key,"count":predata[key]});
 
       }
-      console.log(data);
+      //console.log(data);
 
       draw();
 
@@ -102,8 +102,9 @@
 
       console.log("drawing...");
 
+      var text = "We have "+promoteCount+" users have signed since 11-06 18:00";
+      d3.select("#promoteCount").text(text);
 
-      d3.select("#promoteCount").text(promoteCount);
 
       var x = d3.scale.ordinal().rangeRoundBands([0, width], .15);
       var y = d3.scale.linear().range([height, 0]);
